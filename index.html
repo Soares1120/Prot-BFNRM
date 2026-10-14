@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Fuzileiros Navais do Rio Meriti - Protocolo e Trâmite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        
+        <header>
+            <h1>Base de Fuzileiros Navais do Rio Meriti</h1>
+            <p>Sistema de Protocolo, Rastreio e Gestão de Trâmite de Documentos</p>
+        </header>
+
+        <!-- Estatísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total de Protocolos</h3>
+                <div class="number" id="stat-total">0</div>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--warning);">
+                <h3>Em Trâmite / Análise</h3>
+                <div class="number" id="stat-pendente">0</div>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--success);">
+                <h3>Concluídos</h3>
+                <div class="number" id="stat-concluido">0</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            
+            <!-- Coluna da Esquerda: Registar Documento -->
+            <div class="card">
+                <h2>Novo Protocolo</h2>
+                <form id="protocol-form">
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 0.58;">
+                            <label for="doc-type">Tipo de Documento</label>
+                            <select id="doc-type" required>
+                                <option value="CP">CP</option>
+                                <option value="OF" selected>OF</option>
+                                <option value="OF-Ext">OF-Ext</option>
+                                <option value="OS">OS</option>
+                                <option value="PPAA">PPAA</option>
+                                <option value="Port">Port</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 0.42;">
+                            <label for="doc-num-input">Número</label>
+                            <input type="text" id="doc-num-input" placeholder="Ex: 2026/01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doc-sender">Setor de Origem (Remetente)</label>
+                        <select id="doc-sender" required>
+                            <option value="">Selecione a origem...</option>
+                            <option value="01 - Comandante">01 - Comandante</option>
+                            <option value="02 - Imediato">02 - Imediato</option>
+                            <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
+                            <option value="03.2 - Centro de Mensagem">03.2 - Centro de Mensagem</option>
+                            <option value="06 - Assessoria de Inteligência">06 - Assessoria de Inteligência</option>
+                            <option value="10 - Administrativo">10 - Administrativo</option>
+                            <option value="20 - Material">20 - Material</option>
+                            <option value="30 - Intendência">30 - Intendência</option>
+                            <option value="ComFFE">ComFFE</option>
+                            <option value="ComDivRib">ComDivRib</option>
+                            <option value="BtlLogFN">BtlLogFN</option>
+                            <option value="BtlEngFN">BtlEngFN</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doc-current-sector">Setor Inicial de Destino (Trâmite)</label>
+                        <select id="doc-current-sector" required>
+                            <option value="">Selecione o destino...</option>
+                            <option value="01 - Comandante">01 - Comandante</option>
+                            <option value="02 - Imediato">02 - Imediato</option>
+                            <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
+                            <option value="03.2 - Centro de Mensagem">03.2 - Centro de Mensagem</option>
+                            <option value="06 - Assessoria de Inteligência">06 - Assessoria de Inteligência</option>
+                            <option value="10 - Administrativo">10 - Administrativo</option>
+                            <option value="20 - Material">20 - Material</option>
+                            <option value="30 - Intendência">30 - Intendência</option>
+                            <option value="ComFFE">ComFFE</option>
+                            <option value="ComDivRib">ComDivRib</option>
+                            <option value="BtlLogFN">BtlLogFN</option>
+                            <option value="BtlEngFN">BtlEngFN</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doc-subject">Assunto / Descrição</label>
+                        <textarea id="doc-subject" rows="3" placeholder="Resumo do teor..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Registar Protocolo</button>
+                </form>
+            </div>
+
+            <!-- Coluna da Direita: Rastreio e Gestão -->
+            <div class="card">
+                <div class="card-header-flex">
+                    <h2>Rastreio e Trâmite de Documentos</h2>
+                    <button class="btn-refresh" onclick="atualizarLista()" title="Atualizar Lista">
+                        🔄
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label>Prot. (Data)</label>
+                        <input type="date" id="filter-date" onchange="renderTable()">
+                    </div>
+                    <div class="filter-group">
+                        <label>Tipo Doc.</label>
+                        <select id="filter-doctype" onchange="renderTable()">
+                            <option value="">Todos</option>
+                            <option value="CP">CP</option>
+                            <option value="OF">OF</option>
+                            <option value="OF-Ext">OF-Ext</option>
+                            <option value="OS">OS</option>
+                            <option value="PPAA">PPAA</option>
+                            <option value="Port">Port</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Origem</label>
+                        <select id="filter-sender" onchange="renderTable()">
+                            <option value="">Todas</option>
+                            <option value="01 - Comandante">01 - Comandante</option>
+                            <option value="02 - Imediato">02 - Imediato</option>
+                            <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
+                            <option value="03.2 - Centro de Mensagem">03.2 - Centro de Mensagem</option>
+                            <option value="06 - Assessoria de Inteligência">06 - Assessoria de Inteligência</option>
+                            <option value="10 - Administrativo">10 - Administrativo</option>
+                            <option value="20 - Material">20 - Material</option>
+                            <option value="30 - Intendência">30 - Intendência</option>
+                            <option value="ComFFE">ComFFE</option>
+                            <option value="ComDivRib">ComDivRib</option>
+                            <option value="BtlLogFN">BtlLogFN</option>
+                            <option value="BtlEngFN">BtlEngFN</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Setor Atual</label>
+                        <select id="filter-sector" onchange="renderTable()">
+                            <option value="">Todos</option>
+                            <option value="01 - Comandante">01 - Comandante</option>
+                            <option value="02 - Imediato">02 - Imediato</option>
+                            <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
+                            <option value="03.2 - Centro de Mensagem">03.2 - Centro de Mensagem</option>
+                            <option value="06 - Assessoria de Inteligência">06 - Assessoria de Inteligência</option>
+                            <option value="10 - Administrativo">10 - Administrativo</option>
+                            <option value="20 - Material">20 - Material</option>
+                            <option value="30 - Intendência">30 - Intendência</option>
+                            <option value="ComFFE">ComFFE</option>
+                            <option value="ComDivRib">ComDivRib</option>
+                            <option value="BtlLogFN">BtlLogFN</option>
+                            <option value="BtlEngFN">BtlEngFN</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Estado</label>
+                        <select id="filter-status" onchange="renderTable()">
+                            <option value="">Todos</option>
+                            <option value="Em Trâmite">Em Trâmite</option>
+                            <option value="Em Análise">Em Análise</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Prot.</th>
+                                <th>Doc.</th>
+                                <th>Origem</th>
+                                <th>Assunto</th>
+                                <th>Setor Atual (Trâmite)</th>
+                                <th>Estado Atual</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="protocol-table-body">
+                            <!-- Inserção dinâmica via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Script de Gestão Dinâmica com Limpeza de Dados Antigos -->
+    <script>
+        const sectorsList = [
+            '01 - Comandante',
+            '02 - Imediato',
+            '03 - Secretaria do Comando',
+            '03.2 - Centro de Mensagem',
+            '06 - Assessoria de Inteligência',
+            '10 - Administrativo',
+            '20 - Material',
+            '30 - Intendência',
+            'ComFFE',
+            'ComDivRib',
+            'BtlLogFN',
+            'BtlEngFN'
+        ];
+
+        function obterProtocolos() {
+            try {
+                let dados = JSON.parse(localStorage.getItem('intranet_protocols'));
+                if (Array.isArray(dados)) {
+                    return dados;
+                }
+            } catch (e) {}
+            
+            // Inicia limpo (sem dados de teste antigos, pronto para novos registos)
+            return [];
+        }
+
+        function guardarProtocolos(lista) {
+            localStorage.setItem('intranet_protocols', JSON.stringify(lista));
+        }
+
+        const form = document.getElementById('protocol-form');
+        const tableBody = document.getElementById('protocol-table-body');
+        
+        const statTotal = document.getElementById('stat-total');
+        const statPendente = document.getElementById('stat-pendente');
+        const statConcluido = document.getElementById('stat-concluido');
+
+        function getFormattedDateTime() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const dateOnly = `${year}-${month}-${day}`;
+            return { full: `${day}/${month}/${year} ${hours}:${minutes}`, dateOnly: dateOnly };
+        }
+
+        function gerarNumeroProtocolo() {
+            const ano = new Date().getFullYear();
+            let protocolosAtuais = obterProtocolos();
+            let proximoSeq = protocolosAtuais.length + 1;
+            return `PROT-${ano}-${String(proximoSeq).padStart(3, '0')}`;
+        }
+
+        function atualizarLista() {
+            document.getElementById('filter-date').value = '';
+            document.getElementById('filter-doctype').value = '';
+            document.getElementById('filter-sender').value = '';
+            document.getElementById('filter-sector').value = '';
+            document.getElementById('filter-status').value = '';
+            renderTable();
+        }
+
+        function renderTable() {
+            let protocols = obterProtocolos();
+            tableBody.innerHTML = '';
+            
+            let total = protocols.length;
+            let concluidos = 0;
+
+            const fDate = document.getElementById('filter-date').value;
+            const fDocType = document.getElementById('filter-doctype').value;
+            const fSender = document.getElementById('filter-sender').value;
+            const fSector = document.getElementById('filter-sector').value;
+            const fStatus = document.getElementById('filter-status').value;
+
+            const filtered = protocols.filter(p => {
+                let matchDate = fDate ? (p.dateOnly === fDate) : true;
+                let matchDocType = fDocType ? (p.docType === fDocType) : true;
+                let matchSender = fSender ? (p.sender === fSender) : true;
+                let matchSector = fSector ? (p.currentSector === fSector) : true;
+                let matchStatus = fStatus ? (p.status === fStatus) : true;
+
+                return matchDate && matchDocType && matchSender && matchSector && matchStatus;
+            });
+
+            filtered.forEach((p) => {
+                if (p.status === 'Concluído') concluidos++;
+
+                let badgeClass = 'badge-tramite';
+                if (p.status === 'Em Análise') badgeClass = 'badge-analise';
+                if (p.status === 'Concluído') badgeClass = 'badge-concluido';
+
+                const originalIndex = protocols.findIndex(item => item.protocolNum === p.protocolNum);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <strong>${p.protocolNum}</strong>
+                        <small style="color: #6b7280; font-size: 0.70rem; display:block; margin-top:2px;">${p.dateTime}</small>
+                    </td>
+                    <td>
+                        <span class="sector-tag" style="background:#e0f2fe; color:#0369a1;">${p.docInfo}</span>
+                    </td>
+                    <td>${p.sender}</td>
+                    <td>${p.subject}</td>
+                    <td>
+                        <span class="sector-tag">${p.currentSector}</span>
+                        <span class="history-sub">Atualizado em: ${p.sectorUpdateDateTime || p.dateTime}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass}">${p.status}</span>
+                        <span class="history-sub">Atualizado em: ${p.statusUpdateDateTime || p.dateTime}</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="forwardDocument(${originalIndex})">Encaminhar</button>
+                            <button class="action-btn" onclick="toggleStatus(${originalIndex})" style="background:#f0fdf4; border-color:#bbf7d0; color:#059669;">Estado</button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            statTotal.textContent = total;
+            statPendente.textContent = total - concluidos;
+            statConcluido.textContent = concluidos;
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const docType = document.getElementById('doc-type').value;
+            const docNumInput = document.getElementById('doc-num-input').value.trim();
+            const fullDocInfo = `${docType}-${docNumInput}`;
+
+            const sender = document.getElementById('doc-sender').value;
+            const currentSector = document.getElementById('doc-current-sector').value;
+            const subject = document.getElementById('doc-subject').value;
+            
+            const dt = getFormattedDateTime();
+            const novoProt = gerarNumeroProtocolo();
+
+            let storedProtocols = obterProtocolos();
+
+            const novoRegisto = { 
+                protocolNum: novoProt,
+                docType: docType,
+                docInfo: fullDocInfo, 
+                sender: sender, 
+                subject: subject, 
+                currentSector: currentSector,
+                sectorUpdateDateTime: dt.full,
+                status: 'Em Trâmite',
+                statusUpdateDateTime: dt.full,
+                dateTime: dt.full,
+                dateOnly: dt.dateOnly
+            };
+
+            storedProtocols.unshift(novoRegisto);
+            guardarProtocolos(storedProtocols);
+            
+            form.reset();
+            renderTable();
+            alert('Documento protocolado e guardado com sucesso!');
+        });
+
+        window.forwardDocument = function(index) {
+            let protocols = obterProtocolos();
+            let current = protocols[index].currentSector;
+            let promptText = `Documento atualmente em: [ ${current} ]\n\nEscolha o próximo setor de destino digitando o número:\n`;
+            
+            sectorsList.forEach((sec, idx) => {
+                promptText += `${idx + 1} - ${sec}\n`;
+            });
+
+            let choice = prompt(promptText);
+            if (choice !== null && choice.trim() !== '') {
+                let choiceNum = parseInt(choice) - 1;
+                if (choiceNum >= 0 && choiceNum < sectorsList.length) {
+                    protocols[index].currentSector = sectorsList[choiceNum];
+                    protocols[index].sectorUpdateDateTime = getFormattedDateTime().full;
+                    
+                    guardarProtocolos(protocols);
+                    renderTable();
+                } else {
+                    alert('Opção inválida de setor.');
+                }
+            }
+        }
+
+        window.toggleStatus = function(index) {
+            let protocols = obterProtocolos();
+            const states = ['Em Trâmite', 'Em Análise', 'Concluído'];
+            let currentIndex = states.indexOf(protocols[index].status);
+            let nextIndex = (currentIndex + 1) % states.length;
+            
+            protocols[index].status = states[nextIndex];
+            protocols[index].statusUpdateDateTime = getFormattedDateTime().full;
+
+            guardarProtocolos(protocols);
+            renderTable();
+        }
+
+        renderTable();
+    </script>
+</body
