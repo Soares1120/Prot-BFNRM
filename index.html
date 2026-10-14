@@ -205,7 +205,7 @@
 
     </div>
 
-    <!-- Firebase SDKs via CDN Oficial (Compatível com GitHub Pages) -->
+    <!-- Firebase SDKs via CDN Oficial -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -274,16 +274,6 @@
             }
         }
         window.carregarProtocolosDaNuvem = carregarProtocolosDaNuvem;
-
-        function atualizarLista() {
-            document.getElementById('filter-date').value = '';
-            document.getElementById('filter-doctype').value = '';
-            document.getElementById('filter-sender').value = '';
-            document.getElementById('filter-sector').value = '';
-            document.getElementById('filter-status').value = '';
-            renderTable();
-        }
-        window.atualizarLista = atualizarLista;
 
         function renderTable() {
             tableBody.innerHTML = '';
@@ -394,8 +384,7 @@
 
             let promptText = `Documento atualmente em: [ ${p.currentSector} ]\n\nEscolha o próximo setor de destino digitando o número:\n`;
             sectorsList.forEach((sec, idx) => {
-
-promptText += `${idx + 1} - ${sec}\n`;
+                promptText += `${idx + 1} - ${sec}\n`;
             });
 
             let choice = prompt(promptText);
