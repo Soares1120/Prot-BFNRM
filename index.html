@@ -205,7 +205,7 @@
 
     </div>
 
-    <!-- Firebase SDKs via CDN Oficial -->
+    <!-- Firebase SDKs via CDN Oficial com Tratamento de Erros -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -240,12 +240,6 @@
 
         let listaProtocolosCache = [];
 
-        const form = document.getElementById('protocol-form');
-        const tableBody = document.getElementById('protocol-table-body');
-        const statTotal = document.getElementById('stat-total');
-        const statPendente = document.getElementById('stat-pendente');
-        const statConcluido = document.getElementById('stat-concluido');
-
         function getFormattedDateTime() {
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
@@ -276,15 +270,22 @@
         window.carregarProtocolosDaNuvem = carregarProtocolosDaNuvem;
 
         function renderTable() {
+            const tableBody = document.getElementById('protocol-table-body');
+            const statTotal = document.getElementById('stat-total');
+            const statPendente = document.getElementById('stat-pendente');
+            const statConcluido = document.getElementById('stat-concluido');
+
+            if (!tableBody) return;
+
             tableBody.innerHTML = '';
             let total = listaProtocolosCache.length;
             let concluidos = 0;
 
-            const fDate = document.getElementById('filter-date').value;
-            const fDocType = document.getElementById('filter-doctype').value;
-            const fSender = document.getElementById('filter-sender').value;
-            const fSector = document.getElementById('filter-sector').value;
-            const fStatus = document.getElementById('filter-status').value;
+            const fDate = document.getElementById('filter-date')?.value || '';
+            const fDocType = document.getElementById('filter-doctype')?.value || '';
+            const fSender = document.getElementById('filter-sender')?.value || '';
+            const fSector = document.getElementById('filter-sector')?.value || '';
+            const fStatus = document.getElementById('filter-status')?.value || '';
 
             const filtered = listaProtocolosCache.filter(p => {
                 let matchDate = fDate ? (p.dateOnly === fDate) : true;
@@ -332,51 +333,54 @@
                 tableBody.appendChild(row);
             });
 
-            statTotal.textContent = total;
-            statPendente.textContent = total - concluidos;
-            statConcluido.textContent = concluidos;
+            if (statTotal) statTotal.textContent = total;
+            if (statPendente) statPendente.textContent = total - concluidos;
+            if (statConcluido) statConcluido.textContent = concluidos;
         }
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const docType = document.getElementById('doc-type').value;
-            const docNumInput = document.getElementById('doc-num-input').value.trim();
-            const fullDocInfo = `${docType}-${docNumInput}`;
+        const form = document.getElementById('protocol-form');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const docType = document.getElementById('doc-type').value;
+                const docNumInput = document.getElementById('doc-num-input').value.trim();
+                const fullDocInfo = `${docType}-${docNumInput}`;
 
-            const sender = document.getElementById('doc-sender').value;
-            const currentSector = document.getElementById('doc-current-sector').value;
-            const subject = document.getElementById('doc-subject').value;
-            
-            const dt = getFormattedDateTime();
-            const ano = new Date().getFullYear();
-            const novoProt = `PROT-${ano}-${String(listaProtocolosCache.length + 1).padStart(3, '0')}`;
+                const sender = document.getElementById('doc-sender').value;
+                const currentSector = document.getElementById('doc-current-sector').value;
+                const subject = document.getElementById('doc-subject').value;
+                
+                const dt = getFormattedDateTime();
+                const ano = new Date().getFullYear();
+                const novoProt = `PROT-${ano}-${String(listaProtocolosCache.length + 1).padStart(3, '0')}`;
 
-            const novoRegisto = { 
-                protocolNum: novoProt,
-                docType: docType,
-                docInfo: fullDocInfo, 
-                sender: sender, 
-                subject: subject, 
-                currentSector: currentSector,
-                sectorUpdateDateTime: dt.full,
-                status: 'Em Trâmite',
-                statusUpdateDateTime: dt.full,
-                dateTime: dt.full,
-                dateOnly: dt.dateOnly,
-                timestampCriacao: new Date().toISOString()
-            };
+                const novoRegisto = { 
+                    protocolNum: novoProt,
+                    docType: docType,
+                    docInfo: fullDocInfo, 
+                    sender: sender, 
+                    subject: subject, 
+                    currentSector: currentSector,
+                    sectorUpdateDateTime: dt.full,
+                    status: 'Em Trâmite',
+                    statusUpdateDateTime: dt.full,
+                    dateTime: dt.full,
+                    dateOnly: dt.dateOnly,
+                    timestampCriacao: new Date().toISOString()
+                };
 
-            try {
-                await addDoc(collection(db, "protocolos"), novoRegisto);
-                form.reset();
-                await carregarProtocolosDaNuvem();
-                alert('Documento protocolado e guardado na nuvem com sucesso!');
-            } catch (error) {
-                console.error("Erro ao salvar no Firestore: ", error);
-                alert('Erro ao guardar documento na nuvem.');
-            }
-        });
+                try {
+                    await addDoc(collection(db, "protocolos"), novoRegisto);
+                    form.reset();
+                    await carregarProtocolosDaNuvem();
+                    alert('Documento protocolado e guardado na nuvem com sucesso!');
+                } catch (error) {
+                    console.error("Erro ao salvar no Firestore: ", error);
+                    alert('Erro ao guardar documento na nuvem.');
+                }
+            });
+        }
 
         window.forwardDocument = async function(id) {
             let p = listaProtocolosCache.find(item => item.id === id);
