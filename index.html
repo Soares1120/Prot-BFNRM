@@ -108,7 +108,7 @@
             <div class="card">
                 <div class="card-header-flex">
                     <h2>Rastreio e Trâmite de Documentos</h2>
-                    <button class="btn-refresh" onclick="atualizarLista()" title="Atualizar Lista">
+                    <button class="btn-refresh" onclick="carregarProtocolosDaNuvem()" title="Atualizar Lista">
                         🔄
                     </button>
                 </div>
@@ -202,8 +202,24 @@
 
     </div>
 
-    <!-- Script de Gestão Dinâmica com Limpeza de Dados Antigos -->
-    <script>
+    <!-- Firebase SDKs (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-p80ab2chWCfTQbSBqvJ5x3Qi_iGNQwQ",
+            authDomain: "prot-bfnrm.firebaseapp.com",
+            projectId: "prot-bfnrm",
+            storageBucket: "prot-bfnrm.firebasestorage.app",
+            messagingSenderId: "190372918923",
+            appId: "1:190372918923:web:ede314e2613cd7a125c68e",
+            measurementId: "G-DEW1QXWWLD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         const sectorsList = [
             '01 - Comandante',
             '02 - Imediato',
@@ -219,25 +235,10 @@
             'BtlEngFN'
         ];
 
-        function obterProtocolos() {
-            try {
-                let dados = JSON.parse(localStorage.getItem('intranet_protocols'));
-                if (Array.isArray(dados)) {
-                    return dados;
-                }
-            } catch (e) {}
-            
-            // Inicia limpo (sem dados de teste antigos, pronto para novos registos)
-            return [];
-        }
-
-        function guardarProtocolos(lista) {
-            localStorage.setItem('intranet_protocols', JSON.stringify(lista));
-        }
+        let listaProtocolosCache = [];
 
         const form = document.getElementById('protocol-form');
         const tableBody = document.getElementById('protocol-table-body');
-        
         const statTotal = document.getElementById('stat-total');
         const statPendente = document.getElementById('stat-pendente');
         const statConcluido = document.getElementById('stat-concluido');
@@ -253,12 +254,25 @@
             return { full: `${day}/${month}/${year} ${hours}:${minutes}`, dateOnly: dateOnly };
         }
 
-        function gerarNumeroProtocolo() {
-            const ano = new Date().getFullYear();
-            let protocolosAtuais = obterProtocolos();
-            let proximoSeq = protocolosAtuais.length + 1;
-            return `PROT-${ano}-${String(proximoSeq).padStart(3, '0')}`;
+        async function carregarProtocolosDaNuvem() {
+            try {
+                const q = query(collection(db, "protocolos"));
+                const querySnapshot = await getDocs(q);
+                listaProtocolosCache = [];
+                
+                querySnapshot.forEach((docSnap) => {
+                    listaProtocolosCache.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Ordenar por data decrescente (mais recentes primeiro)
+                listaProtocolosCache.sort((a, b) => new Date(b.timestampCriacao || 0) - new Date(a.timestampCriacao || 0));
+                
+                renderTable();
+            } catch (error) {
+                console.error("Erro ao carregar do Firestore: ", error);
+            }
         }
+        window.carregarProtocolosDaNuvem = carregarProtocolosDaNuvem;
 
         function atualizarLista() {
             document.getElementById('filter-date').value = '';
@@ -268,12 +282,11 @@
             document.getElementById('filter-status').value = '';
             renderTable();
         }
+        window.atualizarLista = atualizarLista;
 
         function renderTable() {
-            let protocols = obterProtocolos();
             tableBody.innerHTML = '';
-            
-            let total = protocols.length;
+            let total = listaProtocolosCache.length;
             let concluidos = 0;
 
             const fDate = document.getElementById('filter-date').value;
@@ -282,7 +295,7 @@
             const fSector = document.getElementById('filter-sector').value;
             const fStatus = document.getElementById('filter-status').value;
 
-            const filtered = protocols.filter(p => {
+            const filtered = listaProtocolosCache.filter(p => {
                 let matchDate = fDate ? (p.dateOnly === fDate) : true;
                 let matchDocType = fDocType ? (p.docType === fDocType) : true;
                 let matchSender = fSender ? (p.sender === fSender) : true;
@@ -298,8 +311,6 @@
                 let badgeClass = 'badge-tramite';
                 if (p.status === 'Em Análise') badgeClass = 'badge-analise';
                 if (p.status === 'Concluído') badgeClass = 'badge-concluido';
-
-                const originalIndex = protocols.findIndex(item => item.protocolNum === p.protocolNum);
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -322,8 +333,8 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="action-btn" onclick="forwardDocument(${originalIndex})">Encaminhar</button>
-                            <button class="action-btn" onclick="toggleStatus(${originalIndex})" style="background:#f0fdf4; border-color:#bbf7d0; color:#059669;">Estado</button>
+                            <button class="action-btn" onclick="forwardDocument('${p.id}')">Encaminhar</button>
+                            <button class="action-btn" onclick="toggleStatus('${p.id}')" style="background:#f0fdf4; border-color:#bbf7d0; color:#059669;">Estado</button>
                         </div>
                     </td>
                 `;
@@ -335,7 +346,7 @@
             statConcluido.textContent = concluidos;
         }
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const docType = document.getElementById('doc-type').value;
@@ -347,9 +358,8 @@
             const subject = document.getElementById('doc-subject').value;
             
             const dt = getFormattedDateTime();
-            const novoProt = gerarNumeroProtocolo();
-
-            let storedProtocols = obterProtocolos();
+            const ano = new Date().getFullYear();
+            const novoProt = `PROT-${ano}-${String(listaProtocolosCache.length + 1).padStart(3, '0')}`;
 
             const novoRegisto = { 
                 protocolNum: novoProt,
@@ -362,22 +372,26 @@
                 status: 'Em Trâmite',
                 statusUpdateDateTime: dt.full,
                 dateTime: dt.full,
-                dateOnly: dt.dateOnly
+                dateOnly: dt.dateOnly,
+                timestampCriacao: new Date().toISOString()
             };
 
-            storedProtocols.unshift(novoRegisto);
-            guardarProtocolos(storedProtocols);
-            
-            form.reset();
-            renderTable();
-            alert('Documento protocolado e guardado com sucesso!');
+            try {
+                await addDoc(collection(db, "protocolos"), novoRegisto);
+                form.reset();
+                await carregarProtocolosDaNuvem();
+                alert('Documento protocolado e guardado na nuvem com sucesso!');
+            } catch (error) {
+                console.error("Erro ao salvar no Firestore: ", error);
+                alert('Erro ao guardar documento na nuvem.');
+            }
         });
 
-        window.forwardDocument = function(index) {
-            let protocols = obterProtocolos();
-            let current = protocols[index].currentSector;
-            let promptText = `Documento atualmente em: [ ${current} ]\n\nEscolha o próximo setor de destino digitando o número:\n`;
-            
+        window.forwardDocument = async function(id) {
+            let p = listaProtocolosCache.find(item => item.id === id);
+            if (!p) return;
+
+            let promptText = `Documento atualmente em: [ ${p.currentSector} ]\n\nEscolha o próximo setor de destino digitando o número:\n`;
             sectorsList.forEach((sec, idx) => {
                 promptText += `${idx + 1} - ${sec}\n`;
             });
@@ -386,30 +400,49 @@
             if (choice !== null && choice.trim() !== '') {
                 let choiceNum = parseInt(choice) - 1;
                 if (choiceNum >= 0 && choiceNum < sectorsList.length) {
-                    protocols[index].currentSector = sectorsList[choiceNum];
-                    protocols[index].sectorUpdateDateTime = getFormattedDateTime().full;
-                    
-                    guardarProtocolos(protocols);
-                    renderTable();
+                    const novoSetor = sectorsList[choiceNum];
+                    const dataAtual = getFormattedDateTime().full;
+
+                    try {
+                        const docRef = doc(db, "protocolos", id);
+                        await updateDoc(docRef, {
+                            currentSector: novoSetor,
+                            sectorUpdateDateTime: dataAtual
+                        });
+                        await carregarProtocolosDaNuvem();
+                    } catch (error) {
+                        console.error("Erro ao atualizar setor: ", error);
+                    }
                 } else {
                     alert('Opção inválida de setor.');
                 }
             }
         }
 
-        window.toggleStatus = function(index) {
-            let protocols = obterProtocolos();
-            const states = ['Em Trâmite', 'Em Análise', 'Concluído'];
-            let currentIndex = states.indexOf(protocols[index].status);
-            let nextIndex = (currentIndex + 1) % states.length;
-            
-            protocols[index].status = states[nextIndex];
-            protocols[index].statusUpdateDateTime = getFormattedDateTime().full;
+        window.toggleStatus = async function(id) {
+            let p = listaProtocolosCache.find(item => item.id === id);
+            if (!p) return;
 
-            guardarProtocolos(protocols);
-            renderTable();
+            const states = ['Em Trâmite', 'Em Análise', 'Concluído'];
+            let currentIndex = states.indexOf(p.status);
+            let nextIndex = (currentIndex + 1) % states.length;
+            const novoEstado = states[nextIndex];
+            const dataAtual = getFormattedDateTime().full;
+
+            try {
+                const docRef = doc(db, "protocolos", id);
+                await updateDoc(docRef, {
+                    status: novoEstado,
+                    statusUpdateDateTime: dataAtual
+                });
+                await carregarProtocolosDaNuvem();
+            } catch (error) {
+                console.error("Erro ao atualizar estado: ", error);
+            }
         }
 
-        renderTable();
+        // Carregar dados ao abrir a página
+        carregarProtocolosDaNuvem();
     </script>
-</body
+</body>
+</html>
