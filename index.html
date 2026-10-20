@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -8,17 +9,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="container">
         
-        <header style="display: flex; align-items: center; gap: 20px;">
-           <img src="brasao.png" alt="Brasão da Base" style="width: 75px; height: 75px; object-fit: contain; background: transparent; padding: 4px; border-radius: 8px;">
+        <header>
+            <img src="brasao.png" alt="Brasão da Base">
             <div>
                 <h1>Base de Fuzileiros Navais do Rio Meriti</h1>
                 <p>Sistema de Protocolo, Rastreio e Gestão de Trâmite de Documentos</p>
             </div>
         </header>
-
         <!-- Estatísticas -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -34,7 +33,6 @@
                 <div class="number" id="stat-concluido">0</div>
             </div>
         </div>
-
         <div class="main-grid">
             
             <!-- Coluna da Esquerda: Registar Documento -->
@@ -59,7 +57,6 @@
                             <input type="text" id="doc-num-input" placeholder="Ex: 2026/01" required>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label for="doc-sender">Setor de Origem (Remetente)</label>
                         <select id="doc-sender" required>
@@ -78,11 +75,10 @@
                             <option value="BtlEngFN">BtlEngFN</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="doc-current-sector">Setor Inicial de Destino (Trâmite)</label>
                         <select id="doc-current-sector" required>
-                            <option value="">Selecione o destino...</option>
+                            <option value="">Selecione o destino inicial...</option>
                             <option value="01 - Comandante">01 - Comandante</option>
                             <option value="02 - Imediato">02 - Imediato</option>
                             <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
@@ -97,25 +93,37 @@
                             <option value="BtlEngFN">BtlEngFN</option>
                         </select>
                     </div>
-
+                    <div class="form-group">
+                        <label for="doc-final-sector">Destino Final</label>
+                        <select id="doc-final-sector" required>
+                            <option value="">Selecione o destino final...</option>
+                            <option value="01 - Comandante">01 - Comandante</option>
+                            <option value="02 - Imediato">02 - Imediato</option>
+                            <option value="03 - Secretaria do Comando">03 - Secretaria do Comando</option>
+                            <option value="03.2 - Centro de Mensagem">03.2 - Centro de Mensagem</option>
+                            <option value="06 - Assessoria de Inteligência">06 - Assessoria de Inteligência</option>
+                            <option value="10 - Administrativo">10 - Administrativo</option>
+                            <option value="20 - Material">20 - Material</option>
+                            <option value="30 - Intendência">30 - Intendência</option>
+                            <option value="ComFFE">ComFFE</option>
+                            <option value="ComDivRib">ComDivRib</option>
+                            <option value="BtlLogFN">BtlLogFN</option>
+                            <option value="BtlEngFN">BtlEngFN</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="doc-subject">Assunto / Descrição</label>
                         <textarea id="doc-subject" rows="3" placeholder="Resumo do teor..." required></textarea>
                     </div>
-
                     <button type="submit" class="btn-primary">Registar Protocolo</button>
                 </form>
             </div>
-
             <!-- Coluna da Direita: Rastreio e Gestão -->
             <div class="card">
                 <div class="card-header-flex">
                     <h2>Rastreio e Trâmite de Documentos</h2>
-                    <button class="btn-refresh" onclick="carregarProtocolosDaNuvem()" title="Atualizar Lista">
-                        🔄
-                    </button>
+                    <img src="atualizar.png" alt="Atualizar Lista" class="btn-refresh-img" onclick="carregarProtocolosDaNuvem()" title="Atualizar Lista de Protocolos">
                 </div>
-
                 <!-- Barra de Filtros -->
                 <div class="filters-bar">
                     <div class="filter-group">
@@ -180,7 +188,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="table-responsive">
                     <table>
                         <thead>
@@ -190,6 +197,7 @@
                                 <th>Origem</th>
                                 <th>Assunto</th>
                                 <th>Setor Atual (Trâmite)</th>
+                                <th>Destino Final</th>
                                 <th>Estado Atual</th>
                                 <th>Ações</th>
                             </tr>
@@ -200,16 +208,54 @@
                     </table>
                 </div>
             </div>
-
         </div>
-
     </div>
-
-    <!-- Firebase SDKs via CDN Oficial com Tratamento de Erros -->
+    <!-- Modal da Trilha do Trâmite e Auditoria -->
+    <div id="modal-timeline" class="modal-overlay">
+        <div class="modal-content">
+            
+            <div class="modal-top-actions">
+                <button class="close-btn" onclick="fecharModal()">&times;</button>
+            </div>
+            <!-- Cabeçalho Oficial Profissional em Tamanho 12 exclusivo para Impressão -->
+            <div id="print-header" class="print-only-header">
+                <h2>MARINHA DO BRASIL</h2>
+                <h3>BASE DE FUZILEIROS NAVAIS DO RIO MERITI</h3>
+                <p>TERMO DE TRÂMITE E AUDITORIA DE DOCUMENTO</p>
+                
+                <div id="print-header-details" class="print-meta-box">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </div>
+            <!-- Lista de Trâmite Vertical -->
+            <div id="timeline-vertical-container" class="timeline-vertical">
+                <!-- Conteúdo gerado dinamicamente -->
+            </div>
+            <!-- Rodapé Institucional exclusivo para Impressão -->
+            <div id="print-footer" class="print-only-footer">
+                <div style="margin-top: 25px;">
+                    Documento auditado e emitido eletronicamente através do Sistema de Protocolo da Base de Fuzileiros Navais do Rio Meriti.
+                </div>
+                <div class="print-signature-area">
+                    <div class="print-signature-line">
+                        Encarregado do Setor / Protocolo
+                    </div>
+                    <div class="print-signature-line">
+                        Recebedor / Setor Destino
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                <button class="action-btn btn-print-modal" onclick="window.print()" style="background: var(--primary); color: white; border: none; padding: 10px 18px; font-size: 0.85rem;">
+                    🖨️ Imprimir Termo de Trâmite
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Firebase SDKs via CDN Oficial -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
         const firebaseConfig = {
             apiKey: "AIzaSyA-p80ab2chWCfTQbSBqvJ5x3Qi_iGNQwQ",
             authDomain: "prot-bfnrm.firebaseapp.com",
@@ -219,10 +265,8 @@
             appId: "1:190372918923:web:ede314e2613cd7a125c68e",
             measurementId: "G-DEW1QXWWLD"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
         const sectorsList = [
             '01 - Comandante',
             '02 - Imediato',
@@ -237,9 +281,7 @@
             'BtlLogFN',
             'BtlEngFN'
         ];
-
         let listaProtocolosCache = [];
-
         function getFormattedDateTime() {
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
@@ -250,7 +292,6 @@
             const dateOnly = `${year}-${month}-${day}`;
             return { full: `${day}/${month}/${year} ${hours}:${minutes}`, dateOnly: dateOnly };
         }
-
         async function carregarProtocolosDaNuvem() {
             try {
                 const q = query(collection(db, "protocolos"));
@@ -260,7 +301,6 @@
                 querySnapshot.forEach((docSnap) => {
                     listaProtocolosCache.push({ id: docSnap.id, ...docSnap.data() });
                 });
-
                 listaProtocolosCache.sort((a, b) => new Date(b.timestampCriacao || 0) - new Date(a.timestampCriacao || 0));
                 renderTable();
             } catch (error) {
@@ -268,47 +308,42 @@
             }
         }
         window.carregarProtocolosDaNuvem = carregarProtocolosDaNuvem;
-
         function renderTable() {
             const tableBody = document.getElementById('protocol-table-body');
             const statTotal = document.getElementById('stat-total');
             const statPendente = document.getElementById('stat-pendente');
             const statConcluido = document.getElementById('stat-concluido');
-
             if (!tableBody) return;
-
             tableBody.innerHTML = '';
             let total = listaProtocolosCache.length;
             let concluidos = 0;
-
             const fDate = document.getElementById('filter-date')?.value || '';
             const fDocType = document.getElementById('filter-doctype')?.value || '';
             const fSender = document.getElementById('filter-sender')?.value || '';
             const fSector = document.getElementById('filter-sector')?.value || '';
             const fStatus = document.getElementById('filter-status')?.value || '';
-
             const filtered = listaProtocolosCache.filter(p => {
                 let matchDate = fDate ? (p.dateOnly === fDate) : true;
                 let matchDocType = fDocType ? (p.docType === fDocType) : true;
                 let matchSender = fSender ? (p.sender === fSender) : true;
                 let matchSector = fSector ? (p.currentSector === fSector) : true;
                 let matchStatus = fStatus ? (p.status === fStatus) : true;
-
                 return matchDate && matchDocType && matchSender && matchSector && matchStatus;
             });
-
             filtered.forEach((p) => {
                 if (p.status === 'Concluído') concluidos++;
-
                 let badgeClass = 'badge-tramite';
                 if (p.status === 'Em Análise') badgeClass = 'badge-analise';
                 if (p.status === 'Concluído') badgeClass = 'badge-concluido';
-
+                let sectorOptionsHtml = `<option value="">Encaminhar para...</option>`;
+                sectorsList.forEach(sec => {
+                    sectorOptionsHtml += `<option value="${sec}">${sec}</option>`;
+                });
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>
                         <strong>${p.protocolNum}</strong>
-                        <small style="color: #6b7280; font-size: 0.70rem; display:block; margin-top:2px;">${p.dateTime}</small>
+                        <small class="history-sub">${p.dateTime}</small>
                     </td>
                     <td>
                         <span class="sector-tag" style="background:#e0f2fe; color:#0369a1;">${p.docInfo}</span>
@@ -316,28 +351,35 @@
                     <td>${p.sender}</td>
                     <td>${p.subject}</td>
                     <td>
-                        <span class="sector-tag">${p.currentSector}</span>
-                        <span class="history-sub">Atualizado em: ${p.sectorUpdateDateTime || p.dateTime}</span>
+                        <div class="cell-align-wrapper">
+                            <span class="sector-tag">${p.currentSector}</span>
+                            <img src="historico.png" alt="Histórico" class="btn-history-img" onclick="abrirTrilhaModal('${p.id}')" title="Ver Histórico Auditável do Trâmite">
+                        </div>
+                        <small class="history-sub">Atualizado em: ${p.sectorUpdateDateTime || p.dateTime}</small>
+                    </td>
+                    <td>
+                        <span class="sector-tag" style="background:#fef3c7; color:#92400e;">${p.finalSector || 'Não especificado'}</span>
                     </td>
                     <td>
                         <span class="badge ${badgeClass}">${p.status}</span>
-                        <span class="history-sub">Atualizado em: ${p.statusUpdateDateTime || p.dateTime}</span>
+                        <small class="history-sub">Atualizado em: ${p.statusUpdateDateTime || p.dateTime}</small>
                     </td>
                     <td>
-                        <div class="action-buttons">
-                            <button class="action-btn" onclick="forwardDocument('${p.id}')">Encaminhar</button>
+                        <div class="action-container">
+                            <select id="select-forward-${p.id}" class="action-select">
+                                ${sectorOptionsHtml}
+                            </select>
+                            <button class="action-btn" onclick="executarEncaminhamento('${p.id}')" style="background: var(--primary); color: white; border: none;">Enviar</button>
                             <button class="action-btn" onclick="toggleStatus('${p.id}')" style="background:#f0fdf4; border-color:#bbf7d0; color:#059669;">Estado</button>
                         </div>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
-
             if (statTotal) statTotal.textContent = total;
             if (statPendente) statPendente.textContent = total - concluidos;
             if (statConcluido) statConcluido.textContent = concluidos;
         }
-
         const form = document.getElementById('protocol-form');
         if (form) {
             form.addEventListener('submit', async function(e) {
@@ -346,15 +388,23 @@
                 const docType = document.getElementById('doc-type').value;
                 const docNumInput = document.getElementById('doc-num-input').value.trim();
                 const fullDocInfo = `${docType}-${docNumInput}`;
-
                 const sender = document.getElementById('doc-sender').value;
                 const currentSector = document.getElementById('doc-current-sector').value;
+                const finalSector = document.getElementById('doc-final-sector').value;
                 const subject = document.getElementById('doc-subject').value;
                 
                 const dt = getFormattedDateTime();
                 const ano = new Date().getFullYear();
                 const novoProt = `PROT-${ano}-${String(listaProtocolosCache.length + 1).padStart(3, '0')}`;
-
+                const historicoInicial = [
+                    {
+                        fase: '1. Protocolamento Inicial',
+                        origem: sender,
+                        destino: currentSector,
+                        dataHora: dt.full,
+                        detalhe: `Documento protocolado por ${sender} com destino inicial a ${currentSector}`
+                    }
+                ];
                 const novoRegisto = { 
                     protocolNum: novoProt,
                     docType: docType,
@@ -362,68 +412,103 @@
                     sender: sender, 
                     subject: subject, 
                     currentSector: currentSector,
+                    finalSector: finalSector,
                     sectorUpdateDateTime: dt.full,
                     status: 'Em Trâmite',
                     statusUpdateDateTime: dt.full,
                     dateTime: dt.full,
                     dateOnly: dt.dateOnly,
+                    historyTrail: historicoInicial,
                     timestampCriacao: new Date().toISOString()
                 };
-
                 try {
                     await addDoc(collection(db, "protocolos"), novoRegisto);
                     form.reset();
                     await carregarProtocolosDaNuvem();
-                    alert('Documento protocolado e guardado na nuvem com sucesso!');
+                    alert('Documento protocolado e registrado para auditoria com sucesso!');
                 } catch (error) {
                     console.error("Erro ao salvar no Firestore: ", error);
                     alert('Erro ao guardar documento na nuvem.');
                 }
             });
         }
-
-        window.forwardDocument = async function(id) {
+        window.executarEncaminhamento = async function(id) {
+            const selectElem = document.getElementById(`select-forward-${id}`);
+            if (!selectElem) return;
+            const novoSetor = selectElem.value;
+            if (!novoSetor) {
+                alert('Por favor, selecione o setor de destino antes de clicar em Enviar.');
+                return;
+            }
             let p = listaProtocolosCache.find(item => item.id === id);
             if (!p) return;
-
-            let promptText = `Documento atualmente em: [ ${p.currentSector} ]\n\nEscolha o próximo setor de destino digitando o número:\n`;
-            sectorsList.forEach((sec, idx) => {
-                promptText += `${idx + 1} - ${sec}\n`;
+            const dataAtual = getFormattedDateTime().full;
+            let trilhaAtualizada = p.historyTrail || [];
+            let numPasso = trilhaAtualizada.length + 1;
+            let eDestinoFinal = (novoSetor === p.finalSector) ? ' (Chegada ao Destino Final)' : '';
+            trilhaAtualizada.push({
+                fase: `${numPasso}. Encaminhamento de Documento`,
+                origem: p.currentSector,
+                destino: novoSetor,
+                dataHora: dataAtual,
+                detalhe: `Encaminhado do setor [ ${p.currentSector} ] para [ ${novoSetor} ]${eDestinoFinal}`
             });
-
-            let choice = prompt(promptText);
-            if (choice !== null && choice.trim() !== '') {
-                let choiceNum = parseInt(choice) - 1;
-                if (choiceNum >= 0 && choiceNum < sectorsList.length) {
-                    const novoSetor = sectorsList[choiceNum];
-                    const dataAtual = getFormattedDateTime().full;
-
-                    try {
-                        const docRef = doc(db, "protocolos", id);
-                        await updateDoc(docRef, {
-                            currentSector: novoSetor,
-                            sectorUpdateDateTime: dataAtual
-                        });
-                        await carregarProtocolosDaNuvem();
-                    } catch (error) {
-                        console.error("Erro ao atualizar setor: ", error);
-                    }
-                } else {
-                    alert('Opção inválida de setor.');
-                }
+            try {
+                const docRef = doc(db, "protocolos", id);
+                await updateDoc(docRef, {
+                    currentSector: novoSetor,
+                    sectorUpdateDateTime: dataAtual,
+                    historyTrail: trilhaAtualizada
+                });
+                await carregarProtocolosDaNuvem();
+            } catch (error) {
+                console.error("Erro ao encaminhar documento: ", error);
+                alert('Erro ao encaminhar o documento.');
             }
         }
-
+        window.abrirTrilhaModal = function(id) {
+            let p = listaProtocolosCache.find(item => item.id === id);
+            if (!p) return;
+            const modal = document.getElementById('modal-timeline');
+            const printHeaderDetails = document.getElementById('print-header-details');
+            const timelineContainer = document.getElementById('timeline-vertical-container');
+            printHeaderDetails.innerHTML = `
+                <div><span>Nº Protocolo:</span> ${p.protocolNum}</div>
+                <div><span>Documento:</span> ${p.docInfo}</div>
+                <div><span>Setor Origem:</span> ${p.sender}</div>
+                <div><span>Destino Final:</span> ${p.finalSector || 'Não especificado'}</div>
+                <div style="grid-column: span 2;"><span>Assunto:</span> ${p.subject}</div>
+                <div style="grid-column: span 2;"><span>Estado Atual:</span> ${p.status} (Localizado em ${p.currentSector})</div>
+            `;
+            timelineContainer.innerHTML = '';
+            const trilha = p.historyTrail || [
+                { fase: '1. Protocolamento Inicial', origem: p.sender, destino: p.currentSector, dataHora: p.dateTime, detalhe: 'Registo Inicial de Protocolo' }
+            ];
+            trilha.forEach((step, idx) => {
+                const isFinal = (step.destino === p.finalSector);
+                const block = document.createElement('div');
+                block.className = `timeline-block ${isFinal ? 'final-step' : ''}`;
+                block.innerHTML = `
+                    <div class="block-title">${step.fase || `Passo ${idx + 1}`}</div>
+                    <div class="block-detail"><strong>De:</strong> ${step.origem} &nbsp;➔&nbsp; <strong>Para:</strong> ${step.destino}</div>
+                    <div class="block-detail">${step.detalhe}</div>
+                    <div class="block-time">📅 Data/Hora: <strong>${step.dataHora}</strong></div>
+                `;
+                timelineContainer.appendChild(block);
+            });
+            modal.style.display = 'flex';
+        }
+        window.fecharModal = function() {
+            document.getElementById('modal-timeline').style.display = 'none';
+        }
         window.toggleStatus = async function(id) {
             let p = listaProtocolosCache.find(item => item.id === id);
             if (!p) return;
-
             const states = ['Em Trâmite', 'Em Análise', 'Concluído'];
             let currentIndex = states.indexOf(p.status);
             let nextIndex = (currentIndex + 1) % states.length;
             const novoEstado = states[nextIndex];
             const dataAtual = getFormattedDateTime().full;
-
             try {
                 const docRef = doc(db, "protocolos", id);
                 await updateDoc(docRef, {
@@ -435,8 +520,8 @@
                 console.error("Erro ao atualizar estado: ", error);
             }
         }
-
         carregarProtocolosDaNuvem();
     </script>
 </body>
 </html>
+
